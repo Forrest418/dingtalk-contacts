@@ -33,7 +33,8 @@ SERVER="$(scripts/resolve_server.sh)"
 - Run locally with `exec`/shell; do not use remote node execution.
 - Perform tool discovery before first query.
 - Use canonical call format for stability:
-  - `mcporter --config "<skill-root>/mcporter.json" call "${SERVER}.<tool>" key:value --output json`
+  - `scripts/mcp.sh call "${SERVER}.<tool>(arg: \"value\")" --output json`
+- Never call raw `mcporter` directly, to avoid falling back to workspace default config.
 - Prefer read-only operations; ask for confirmation before write/update actions.
 - If no data is returned, treat as no-match first; then optionally broaden keyword or retry with equivalent field naming discovered from schema.
 
@@ -66,9 +67,9 @@ Example pattern:
 
 ```bash
 SERVER="$(scripts/resolve_server.sh)"
-CONFIG_PATH="mcporter.json"
-IDS=$(mcporter --config "${CONFIG_PATH}" call "${SERVER}.search_user_by_key_word" key-word:"王" --output json | jq -r '.result[]?.userId')
-mcporter --config "${CONFIG_PATH}" call "${SERVER}.get_user_info_by_user_ids" user-id-list:"$IDS" --output json
+IDS="$(scripts/mcp.sh call "${SERVER}.search_user_by_key_word(keyWord: \"王\")" --output json | jq -r '.result[]?.userId')"
+IDS_JSON="$(printf '%s\n' "${IDS}" | awk 'NF' | jq -R . | jq -s .)"
+scripts/mcp.sh call "${SERVER}.get_user_info_by_user_ids(user_id_list: ${IDS_JSON})" --output json
 ```
 
 ### 2) Locate A User By Mobile / Staff ID
@@ -80,8 +81,7 @@ Example pattern:
 
 ```bash
 SERVER="$(scripts/resolve_server.sh)"
-CONFIG_PATH="mcporter.json"
-mcporter --config "${CONFIG_PATH}" call "${SERVER}.search_user_by_mobile" mobile:"13800000000" --output json
+scripts/mcp.sh call "${SERVER}.search_user_by_mobile(mobile: \"13800000000\")" --output json
 ```
 
 ### 3) Browse Departments And Members
@@ -93,9 +93,8 @@ Example pattern:
 
 ```bash
 SERVER="$(scripts/resolve_server.sh)"
-CONFIG_PATH="mcporter.json"
-mcporter --config "${CONFIG_PATH}" call "${SERVER}.search_dept_by_keyword" query:"营销" --output json
-mcporter --config "${CONFIG_PATH}" call "${SERVER}.get_dept_members_by_deptId" dept-ids:"988113313" --output json
+scripts/mcp.sh call "${SERVER}.search_dept_by_keyword(query: \"营销\")" --output json
+scripts/mcp.sh call "${SERVER}.get_dept_members_by_deptId(deptIds: [\"988113313\"])" --output json
 ```
 
 ### 4) Build Org Snapshot (Read-Only)

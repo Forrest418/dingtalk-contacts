@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+resolve_script_dir() {
+  local src="${BASH_SOURCE[0]}"
+  while [[ -h "${src}" ]]; do
+    local dir
+    dir="$(cd -P "$(dirname "${src}")" && pwd)"
+    src="$(readlink "${src}")"
+    [[ "${src}" != /* ]] && src="${dir}/${src}"
+  done
+  cd -P "$(dirname "${src}")" && pwd
+}
+
+SCRIPT_DIR="$(resolve_script_dir)"
 SKILL_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CONFIG_PATH="${SKILL_DIR}/mcporter.json"
 
@@ -12,7 +23,7 @@ if [[ ! -f "${CONFIG_PATH}" ]]; then
 fi
 
 mcp() {
-  mcporter --config "${CONFIG_PATH}" "$@"
+  "${SCRIPT_DIR}/mcp.sh" "$@"
 }
 
 # Priority:
@@ -43,7 +54,7 @@ for name in "钉钉通讯录" "dingtalk-contacts"; do
   fi
 done
 
-AUTO_NAME="$(
+AUTO_NAME="$({
   mcp list --json 2>/dev/null \
   | jq -r '
       .servers[]
@@ -56,7 +67,7 @@ AUTO_NAME="$(
       | .name
     ' \
   | head -n 1
-)"
+} || true)"
 
 if [[ "${AUTO_NAME}" != "" ]]; then
   echo "${AUTO_NAME}"

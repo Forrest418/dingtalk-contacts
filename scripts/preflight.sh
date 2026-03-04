@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+resolve_script_dir() {
+  local src="${BASH_SOURCE[0]}"
+  while [[ -h "${src}" ]]; do
+    local dir
+    dir="$(cd -P "$(dirname "${src}")" && pwd)"
+    src="$(readlink "${src}")"
+    [[ "${src}" != /* ]] && src="${dir}/${src}"
+  done
+  cd -P "$(dirname "${src}")" && pwd
+}
+
+SCRIPT_DIR="$(resolve_script_dir)"
 SKILL_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CONFIG_PATH="${SKILL_DIR}/mcporter.json"
-SERVER="$("${SCRIPT_DIR}/resolve_server.sh" "${1:-}")"
+SERVER="$(${SCRIPT_DIR}/resolve_server.sh "${1:-}")"
 
 if ! command -v mcporter >/dev/null 2>&1; then
   echo "[preflight] missing binary: mcporter" >&2
@@ -29,7 +40,7 @@ echo "[preflight] mcporter version: $(mcporter --version)"
 echo "[preflight] config path: ${CONFIG_PATH}"
 echo "[preflight] checking server: ${SERVER}"
 
-if ! mcporter --config "${CONFIG_PATH}" list "${SERVER}" --schema --json >"${TMP_JSON}" 2>"${TMP_ERR}"; then
+if ! "${SCRIPT_DIR}/mcp.sh" list "${SERVER}" --schema --json >"${TMP_JSON}" 2>"${TMP_ERR}"; then
   echo "[preflight] server check failed for '${SERVER}'" >&2
   cat "${TMP_ERR}" >&2 || true
   echo "[preflight] fix: update ${CONFIG_PATH} and retry" >&2
