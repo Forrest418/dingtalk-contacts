@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER="${1:-${DINGTALK_CONTACTS_SERVER:-dingtalk-contacts}}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+CONFIG_PATH="${SKILL_DIR}/mcporter.json"
+SERVER="$("${SCRIPT_DIR}/resolve_server.sh" "${1:-}")"
 
 if ! command -v mcporter >/dev/null 2>&1; then
   echo "[preflight] missing binary: mcporter" >&2
@@ -13,16 +16,31 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 2
 fi
 
-echo "[preflight] mcporter version: $(mcporter --version)"
-echo "[preflight] checking server: ${SERVER}"
-
-if ! mcporter list "${SERVER}" --schema --json >/tmp/dingtalk-contacts-schema.json 2>/tmp/dingtalk-contacts-schema.err; then
-  echo "[preflight] server check failed for '${SERVER}'" >&2
-  cat /tmp/dingtalk-contacts-schema.err >&2 || true
-  echo "[preflight] fix: configure MCP URL and retry" >&2
-  echo "[preflight] example: mcporter config add ${SERVER} --url \"<STREAMABLE_HTTP_URL>\"" >&2
+if [[ ! -f "${CONFIG_PATH}" ]]; then
+  echo "[preflight] missing config file: ${CONFIG_PATH}" >&2
   exit 1
 fi
 
-TOOL_COUNT="$(jq '.tools | length' /tmp/dingtalk-contacts-schema.json 2>/dev/null || echo 0)"
+TMP_JSON="$(mktemp)"
+TMP_ERR="$(mktemp)"
+trap 'rm -f "$TMP_JSON" "$TMP_ERR"' EXIT
+
+echo "[preflight] mcporter version: $(mcporter --version)"
+echo "[preflight] config path: ${CONFIG_PATH}"
+echo "[preflight] checking server: ${SERVER}"
+
+if ! mcporter --config "${CONFIG_PATH}" list "${SERVER}" --schema --json >"${TMP_JSON}" 2>"${TMP_ERR}"; then
+  echo "[preflight] server check failed for '${SERVER}'" >&2
+  cat "${TMP_ERR}" >&2 || true
+  echo "[preflight] fix: update ${CONFIG_PATH} and retry" >&2
+  exit 1
+fi
+
+if ! jq -e '.status == "ok" and (.tools | type == "array")' "${TMP_JSON}" >/dev/null 2>&1; then
+  echo "[preflight] invalid schema response for '${SERVER}'" >&2
+  cat "${TMP_JSON}" >&2 || true
+  exit 1
+fi
+
+TOOL_COUNT="$(jq '.tools | length' "${TMP_JSON}")"
 echo "[preflight] ok: server=${SERVER}, tools=${TOOL_COUNT}"

@@ -2,58 +2,39 @@
 
 ## Goal
 
-Allow users to use this skill by maintaining only:
+Allow users to finish setup by placing one JSON file in the skill directory.
 
-- MCP server name (optional)
-- MCP server URL (required)
+## Single-Step Setup
 
-## Option A: One-Line Add (Recommended)
+Put this file at:
 
-```bash
-mcporter config add dingtalk-contacts --url "<STREAMABLE_HTTP_URL>"
-```
-
-If you want a custom server name:
-
-```bash
-mcporter config add "<YOUR_SERVER_NAME>" --url "<STREAMABLE_HTTP_URL>"
-```
-
-Then set:
-
-```bash
-export DINGTALK_CONTACTS_SERVER="<YOUR_SERVER_NAME>"
-```
-
-## Option B: JSON Config File
-
-Project-level (`./config/mcporter.json`) or system-level (`~/.mcporter/mcporter.json`):
+- `./mcporter.json` (skill root)
 
 ```json
 {
   "mcpServers": {
-    "dingtalk-contacts": {
-      "baseUrl": "https://mcp-gw.dingtalk.com/server/<serverId>?key=<key>"
+    "钉钉通讯录": {
+      "type": "streamable-http",
+      "url": "https://mcp-gw.dingtalk.com/server/<serverId>?key=<key>"
     }
-  },
-  "imports": []
+  }
 }
 ```
 
-If server name is not `dingtalk-contacts`, set:
+Notes:
 
-```bash
-export DINGTALK_CONTACTS_SERVER="<YOUR_SERVER_NAME>"
-```
+- Replace `url` with your own MCP URL.
+- Service name can be any value; `钉钉通讯录` is recommended.
+- If you already have an existing `mcporter.json`, merge this server into `mcpServers`.
 
 ## Verify
 
 ```bash
-SERVER="${DINGTALK_CONTACTS_SERVER:-dingtalk-contacts}"
-mcporter list "${SERVER}" --schema --json | jq '.name, .status'
+./scripts/preflight.sh
+./scripts/discover_tools.sh
 ```
 
 Expected:
 
-- `.status` is `ok`
-- `tools` array exists
+- Preflight prints `ok`
+- Discovery prints contact/department-related tools

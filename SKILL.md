@@ -17,15 +17,15 @@ Use this skill to retrieve DingTalk org and people data from a configurable MCP 
 
 Users only need to maintain:
 
-- MCP server name (optional; default `dingtalk-contacts`)
+- MCP JSON config file in skill root: `mcporter.json`
 - Streamable HTTP URL (required)
 
 See [references/configuration.md](references/configuration.md) for minimal config patterns.
 
-At runtime, always resolve server name with:
+At runtime, resolve server name with:
 
 ```bash
-SERVER="${DINGTALK_CONTACTS_SERVER:-dingtalk-contacts}"
+SERVER="$(scripts/resolve_server.sh)"
 ```
 
 ## Execution Policy
@@ -33,7 +33,7 @@ SERVER="${DINGTALK_CONTACTS_SERVER:-dingtalk-contacts}"
 - Run locally with `exec`/shell; do not use remote node execution.
 - Perform tool discovery before first query.
 - Use canonical call format for stability:
-  - `mcporter call "${SERVER}.<tool>" key:value --output json`
+  - `mcporter --config "<skill-root>/mcporter.json" call "${SERVER}.<tool>" key:value --output json`
 - Prefer read-only operations; ask for confirmation before write/update actions.
 - If no data is returned, treat as no-match first; then optionally broaden keyword or retry with equivalent field naming discovered from schema.
 
@@ -42,7 +42,7 @@ SERVER="${DINGTALK_CONTACTS_SERVER:-dingtalk-contacts}"
 Use bundled script:
 
 ```bash
-scripts/preflight.sh "${SERVER}"
+scripts/preflight.sh
 ```
 
 ## Discover Available Tools
@@ -50,7 +50,7 @@ scripts/preflight.sh "${SERVER}"
 Use bundled script:
 
 ```bash
-scripts/discover_tools.sh "${SERVER}"
+scripts/discover_tools.sh
 ```
 
 Then pick actual selector names from schema (different deployments may differ).
@@ -65,9 +65,10 @@ Then pick actual selector names from schema (different deployments may differ).
 Example pattern:
 
 ```bash
-SERVER="${DINGTALK_CONTACTS_SERVER:-dingtalk-contacts}"
-IDS=$(mcporter call "${SERVER}.search_user_by_key_word" key-word:"王" --output json | jq -r '.result[]?.userId')
-mcporter call "${SERVER}.get_user_info_by_user_ids" user-id-list:"$IDS" --output json
+SERVER="$(scripts/resolve_server.sh)"
+CONFIG_PATH="mcporter.json"
+IDS=$(mcporter --config "${CONFIG_PATH}" call "${SERVER}.search_user_by_key_word" key-word:"王" --output json | jq -r '.result[]?.userId')
+mcporter --config "${CONFIG_PATH}" call "${SERVER}.get_user_info_by_user_ids" user-id-list:"$IDS" --output json
 ```
 
 ### 2) Locate A User By Mobile / Staff ID
@@ -78,8 +79,9 @@ mcporter call "${SERVER}.get_user_info_by_user_ids" user-id-list:"$IDS" --output
 Example pattern:
 
 ```bash
-SERVER="${DINGTALK_CONTACTS_SERVER:-dingtalk-contacts}"
-mcporter call "${SERVER}.search_user_by_mobile" mobile:"13800000000" --output json
+SERVER="$(scripts/resolve_server.sh)"
+CONFIG_PATH="mcporter.json"
+mcporter --config "${CONFIG_PATH}" call "${SERVER}.search_user_by_mobile" mobile:"13800000000" --output json
 ```
 
 ### 3) Browse Departments And Members
@@ -90,9 +92,10 @@ mcporter call "${SERVER}.search_user_by_mobile" mobile:"13800000000" --output js
 Example pattern:
 
 ```bash
-SERVER="${DINGTALK_CONTACTS_SERVER:-dingtalk-contacts}"
-mcporter call "${SERVER}.search_dept_by_keyword" query:"营销" --output json
-mcporter call "${SERVER}.get_dept_members_by_deptId" dept-ids:"988113313" --output json
+SERVER="$(scripts/resolve_server.sh)"
+CONFIG_PATH="mcporter.json"
+mcporter --config "${CONFIG_PATH}" call "${SERVER}.search_dept_by_keyword" query:"营销" --output json
+mcporter --config "${CONFIG_PATH}" call "${SERVER}.get_dept_members_by_deptId" dept-ids:"988113313" --output json
 ```
 
 ### 4) Build Org Snapshot (Read-Only)

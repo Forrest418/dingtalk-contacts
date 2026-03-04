@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "钉钉通讯录": {
+      "type": "streamable-http",
+      "url": "https://mcp-gw.dingtalk.com/server/<serverId>?key=<key>"
+    }
+  }
+}

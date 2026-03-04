@@ -9,13 +9,15 @@ Select the correct MCP tool names at runtime for `dingtalk-contacts`.
 List all tool schemas:
 
 ```bash
-mcporter list dingtalk-contacts --schema --json | jq '.'
+SERVER="$(scripts/resolve_server.sh)"
+mcporter --config ./mcporter.json list "$SERVER" --schema --json | jq '.'
 ```
 
 Quick grep-like filter by tool id/name/description:
 
 ```bash
-mcporter list dingtalk-contacts --schema --json \
+SERVER="$(scripts/resolve_server.sh)"
+mcporter --config ./mcporter.json list "$SERVER" --schema --json \
 | jq -r '.. | objects | select(has("name") or has("id")) | [.id // .name, .description // ""] | @tsv' \
 | rg -i "user|employee|contact|phone|mobile|staff|dept|department|org"
 ```
