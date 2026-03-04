@@ -1,6 +1,6 @@
 # dingtalk-contacts
 
-钉钉通讯录技能（Skill），用于通过 MCP 查询组织架构、部门和成员信息。  
+钉钉通讯录技能（Skill），用于查询组织架构、部门和成员信息。  
 适用于 OpenClaw / Codex 等场景，配置方式极简：只需要在技能目录放一个 `mcporter.json`。
 
 如何获得mcp配置文件
@@ -59,3 +59,14 @@ https://forreststudio.feishu.cn/drive/folder/Ma3Rf6gOclsxDQdpR7Aci8aCnbc
     ├── preflight.sh
     └── discover_tools.sh
 ```
+
+
+## 相关技能仓库
+
+- dingtalk-contacts: https://github.com/Forrest418/dingtalk-contacts
+- dingtalk-teambition: https://github.com/Forrest418/dingtalk-teambition
+- dingtalk-chatgroup: https://github.com/Forrest418/dingtalk-chatgroup
+- dingtalk-calendar: https://github.com/Forrest418/dingtalk-calendar
+- dingtalk-attendance: https://github.com/Forrest418/dingtalk-attendance
+- dingtalk-videomeeting: https://github.com/Forrest418/dingtalk-videomeeting
+- dingtalk-amap: https://github.com/Forrest418/dingtalk-amap
