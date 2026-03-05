@@ -14,11 +14,11 @@ resolve_script_dir() {
 
 SCRIPT_DIR="$(resolve_script_dir)"
 SKILL_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-CONFIG_PATH="${SKILL_DIR}/mcporter.json"
+CONFIG_PATH="$(${SCRIPT_DIR}/mcp.sh --print-config-path 2>/dev/null || true)"
 
-if [[ ! -f "${CONFIG_PATH}" ]]; then
-  echo "[resolve] 缺少配置文件: ${CONFIG_PATH}" >&2
-  echo "[resolve] 请将用户提供的 mcporter.json 直接复制到技能目录。" >&2
+if [[ -z "${CONFIG_PATH}" || ! -f "${CONFIG_PATH}" ]]; then
+  echo "[resolve] 缺少配置文件。" >&2
+  echo "[resolve] 查找顺序: ${OPENCLAW_HOME:-$HOME/.openclaw}/config/mcporter.json -> ${OPENCLAW_HOME:-$HOME/.openclaw}/workspace/config/mcporter.json -> ${SKILL_DIR}/mcporter.json" >&2
   exit 1
 fi
 
@@ -75,5 +75,5 @@ if [[ "${AUTO_NAME}" != "" ]]; then
 fi
 
 echo "[resolve] 未找到可用的钉钉通讯录 MCP 服务。" >&2
-echo "[resolve] 请检查技能目录下的 mcporter.json 中 mcpServers 配置。" >&2
+echo "[resolve] 请检查主配置目录或技能目录中的 mcporter.json 的 mcpServers 配置。" >&2
 exit 1
